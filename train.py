@@ -13,7 +13,8 @@ from keras.optimizers import Adam
 from callbacks import CustomModelCheckpoint, CustomTensorBoard
 from utils.multi_gpu_model import multi_gpu_model
 import tensorflow as tf
-import keras
+import h5py
+from keras import backend as K
 from keras.models import load_model
 
 def create_training_instances(
@@ -151,7 +152,21 @@ def create_model(
         print("\nLoading pretrained weights.\n")
         template_model.load_weights(saved_weights_name)
     else:
-        template_model.load_weights("backend.h5", by_name=True)       
+        skip = {"conv_81", "conv_93", "conv_105"}
+        #template_model.load_weights("backend.h5", by_name=True)       
+        with h5py.File("backend.h5", "r") as f:
+            for layer in template_model.layers:
+                if layer.name in skip:
+                    continue
+                if layer.name in f:
+                    g = f[layer.name]
+                    weights = [g[w][()] for w in g.attrs["weight_names"]]
+                    try:
+                        layer.set_weights(weights)
+                    except Exception:
+                        # silently skip any mismatch
+                        pass
+        print("Loaded backbone weights; skipped detection heads:", skip)
 
     if multi_gpu > 1:
         train_model = multi_gpu_model(template_model, gpus=multi_gpu)
