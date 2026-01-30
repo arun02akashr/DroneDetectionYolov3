@@ -1,5 +1,6 @@
 import cv2
 import copy
+import os
 import numpy as np
 from keras.utils import Sequence
 from utils.bbox import BoundBox, bbox_iou
@@ -157,6 +158,13 @@ class BatchGenerator(Sequence):
     
     def _aug_image(self, instance, net_h, net_w):
         image_name = instance['filename']
+        if not os.path.exists(image_name):
+            root, ext = os.path.splitext(image_name)
+            for alt_ext in [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]:
+                alt = root + alt_ext
+                if os.path.exists(alt):
+                    image_name = alt
+                    break
         image = cv2.imread(image_name) # RGB image
         
         if image is None: print('Cannot find ', image_name)
