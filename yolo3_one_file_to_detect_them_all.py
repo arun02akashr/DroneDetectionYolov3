@@ -404,6 +404,10 @@ def _main_(args):
     # load the weights trained on COCO into the model
     weight_reader = WeightReader(weights_path)
     weight_reader.load_weights(yolov3)
+    
+    # save the converted weights for training initialization
+    yolov3.save_weights(args.output)
+    print("Saved Keras weights to:", args.output)
 
     # preprocess the image
     image = cv2.imread(image_path)
@@ -431,5 +435,10 @@ def _main_(args):
     cv2.imwrite(image_path[:-4] + '_detected' + image_path[-4:], (image).astype('uint8')) 
 
 if __name__ == '__main__':
+    argparser.add_argument(
+    '-o',
+    '--output',
+    default='backend.h5',
+    help='output path to save keras weights (.h5)')
     args = argparser.parse_args()
     _main_(args)

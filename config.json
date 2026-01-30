@@ -2,13 +2,13 @@
     "model" : {
         "min_input_size":       288,
         "max_input_size":       448,
-        "anchors":              [17,18, 28,24, 36,34, 42,44, 56,51, 72,66, 90,95, 92,154, 139,281],
+        "anchors":              [31,35, 94,99, 159,211, 180,95, 231,268, 333,137, 365,187, 376,250, 378,351],
         "labels":               ["drone"]
     },
 
     "train": {
-        "train_image_folder":   "F:/Drone/Drone_mira_dataset/images/",
-        "train_annot_folder":   "F:/Drone/Drone_mira_dataset/annots/",
+        "train_image_folder":   "./dataset/images/",
+        "train_annot_folder":   "./dataset/annots/",
         "cache_name":           "drone_train.pkl",
 
         "train_times":          8,
