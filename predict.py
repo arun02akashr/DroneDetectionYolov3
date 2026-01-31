@@ -9,6 +9,8 @@ from utils.bbox import draw_boxes
 from keras.models import load_model
 from tqdm import tqdm
 import numpy as np
+from yolo import create_yolov3_model
+from keras import backend as K
 
 def _main_(args):
     config_path  = args.conf
@@ -18,6 +20,32 @@ def _main_(args):
     with open(config_path) as config_buffer:    
         config = json.load(config_buffer)
 
+    # labels
+    labels = config['model']['labels']
+    labels = sorted(labels)
+    # anchors
+    anchors = config['model']['anchors']
+    
+    max_box_per_image = 30
+    max_grid = [config['model']['max_input_size'], config['model']['max_input_size']]
+    batch_size = 1
+
+    # build both models, but we only use infer_model
+    train_model, infer_model = create_yolov3_model(
+        nb_class=len(labels),
+        anchors=anchors,
+        max_box_per_image=max_box_per_image,
+        max_grid=max_grid,
+        batch_size=batch_size,
+        warmup_batches=0,
+        ignore_thresh=0.5,
+        grid_scales=[1, 1, 1],
+        obj_scale=5,
+        noobj_scale=1,
+        xywh_scale=1,
+        class_scale=1
+    )
+    
     makedirs(output_path)
 
     ###############################
@@ -30,7 +58,7 @@ def _main_(args):
     #   Load the model
     ###############################
     os.environ['CUDA_VISIBLE_DEVICES'] = config['train']['gpus']
-    infer_model = load_model(config['train']['saved_weights_name'])
+    infer_model.load_weights(config['train']['saved_weights_name'])
 
     ###############################
     #   Predict bounding boxes 
@@ -120,7 +148,10 @@ def _main_(args):
             draw_boxes(image, boxes, config['model']['labels'], obj_thresh) 
      
             # write the image with bounding boxes to file
-            cv2.imwrite(output_path + image_path.split('/')[-1], np.uint8(image))         
+            #cv2.imwrite(output_path + image_path.split('/')[-1], np.uint8(image))  
+            
+            out_file = os.path.join(output_path, os.path.basename(image_path))
+            cv2.imwrite(out_file, np.uint8(image))       
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description='Predict with a trained yolo model')
