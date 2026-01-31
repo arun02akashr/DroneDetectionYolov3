@@ -233,4 +233,25 @@ class BatchGenerator(Sequence):
         return np.array(annots)
 
     def load_image(self, i):
-        return cv2.imread(self.instances[i]['filename'])     
+        image_path = self.instances[i]['filename']
+
+        # Try original path first
+        image = cv2.imread(image_path)
+        if image is not None:
+            return image
+
+        # If failed, try alternate extensions
+        root, ext = os.path.splitext(image_path)
+        for alt_ext in [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]:
+            alt_path = root + alt_ext
+            if os.path.exists(alt_path):
+                image = cv2.imread(alt_path)
+                if image is not None:
+                    return image
+
+        # Final failure
+        raise FileNotFoundError(
+            f"Could not load image for instance {i}. Tried: {image_path} "
+            f"and common extensions."
+        )
+   
